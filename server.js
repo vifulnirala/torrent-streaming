@@ -23,6 +23,37 @@ const TORZNAB_CONFIG = {
 const YTS_API_BASE =
   process.env.YTS_API_BASE || 'https://yts.lt/api/v2/list_movies.json';
 
+// TMDB search is used to look up title metadata and IDs without exposing credentials
+// in the browser. Set TMDB_API_READ_ACCESS_TOKEN in the server environment.
+const TMDB_API_READ_ACCESS_TOKEN = process.env.TMDB_API_READ_ACCESS_TOKEN || '';
+
+
+// Optional licensed external-player adapter. Configure a provider you are authorized
+// to embed; the browser never submits an arbitrary iframe URL to the server.
+const EMBED_PROVIDER = {
+  name: process.env.EMBED_PROVIDER_NAME || 'VidSrc',
+  baseUrl: process.env.EMBED_PROVIDER_BASE_URL || 'https://vidsrc.sh',
+  moviePath: process.env.EMBED_MOVIE_PATH_TEMPLATE || '/embed/movie/{id}',
+  tvPath: process.env.EMBED_TV_PATH_TEMPLATE || '/embed/tv/{id}/{season}/{episode}'
+};
+
+function getEmbedProviderConfig() {
+  if (!EMBED_PROVIDER.baseUrl || !EMBED_PROVIDER.moviePath || !EMBED_PROVIDER.tvPath) return null;
+  if (!EMBED_PROVIDER.moviePath.includes('{id}') || !['{id}', '{season}', '{episode}'].every(token => EMBED_PROVIDER.tvPath.includes(token))) return null;
+  try {
+    const base = new URL(EMBED_PROVIDER.baseUrl);
+    if (base.protocol !== 'https:' || base.username || base.password) return null;
+    for (const template of [EMBED_PROVIDER.moviePath, EMBED_PROVIDER.tvPath]) {
+      if (!template.startsWith('/') || template.startsWith('//') || /^[a-z][a-z0-9+.-]*:/i.test(template)) return null;
+      const resolved = new URL(template.replace(/\{(?:id|season|episode)\}/g, 'placeholder'), base);
+      if (resolved.origin !== base.origin) return null;
+    }
+    return { base, name: EMBED_PROVIDER.name, moviePath: EMBED_PROVIDER.moviePath, tvPath: EMBED_PROVIDER.tvPath };
+  } catch (_) {
+    return null;
+  }
+}
+
 const DEFAULT_TRACKERS = [
   'udp://tracker.opentrackr.org:1337/announce',
   'udp://open.stealth.si:80/announce',
@@ -57,20 +88,6 @@ const CATALOG = [
     year: 1998,
     poster: 'https://archive.org/services/img/scooby-doo-on-zombie-island-1998_202309',
     magnet: 'magnet:?xt=urn:btih:965855465B8DEB6D982630F4C40DFBE5C3FB38D4&dn=Scooby-Doo+Where+Are+You+1969+S01-S03+1080p+Blu-Ray+H265+10bit+AAC-Zero00&tr=http%3A%2F%2Fp4p.arenabg.com%3A1337%2Fannounce&tr=udp%3A%2F%2F47.ip-51-68-199.eu%3A6969%2Fannounce&tr=udp%3A%2F%2F9.rarbg.me%3A2780%2Fannounce&tr=udp%3A%2F%2F9.rarbg.to%3A2710%2Fannounce&tr=udp%3A%2F%2F9.rarbg.to%3A2730%2Fannounce&tr=udp%3A%2F%2F9.rarbg.to%3A2920%2Fannounce&tr=udp%3A%2F%2Fopen.stealth.si%3A80%2Fannounce&tr=udp%3A%2F%2Fopentracker.i2p.rocks%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.cyberia.is%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.dler.org%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.internetwarriors.net%3A1337%2Fannounce&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=udp%3A%2F%2Ftracker.pirateparty.gr%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.tiny-vps.com%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.torrent.eu.org%3A451%2Fannounce'
-  },
-  {
-    "id": "Scooby-Doo! Mystery Incorporated Season 1",
-    "title": "Scooby-Doo! Mystery Incorporated Season 1",
-    "year": 1978,
-    "poster": "https://upload.wikimedia.org/wikipedia/commons/c/c5/Big_Buck_Bunny_poster_big.jpg",
-    "magnet" : "magnet:?xt=urn:btih:1637E92A4C67CE248687EAA76A9B724F23CADBB0&dn=Scooby-Doo%21+Mystery+Incorporated+Complete+Season+1+1080P+WEB-DL&tr=http%3A%2F%2Fp4p.arenabg.com%3A1337%2Fannounce&tr=udp%3A%2F%2F47.ip-51-68-199.eu%3A6969%2Fannounce&tr=udp%3A%2F%2F9.rarbg.me%3A2780%2Fannounce&tr=udp%3A%2F%2F9.rarbg.to%3A2710%2Fannounce&tr=udp%3A%2F%2F9.rarbg.to%3A2730%2Fannounce&tr=udp%3A%2F%2F9.rarbg.to%3A2920%2Fannounce&tr=udp%3A%2F%2Fopen.stealth.si%3A80%2Fannounce&tr=udp%3A%2F%2Fopentracker.i2p.rocks%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.cyberia.is%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.dler.org%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.internetwarriors.net%3A1337%2Fannounce&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=udp%3A%2F%2Ftracker.pirateparty.gr%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.tiny-vps.com%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.torrent.eu.org%3A451%2Fannounce"
-  },
-  {
-    "id": "Scooby-Doo! Mystery Incorporated Season 2",
-    "title": "Scooby-Doo! Mystery Incorporated Season 2",
-    "year": 1978,
-    "poster": "https://upload.wikimedia.org/wikipedia/commons/c/c5/Big_Buck_Bunny_poster_big.jpg",
-    "magnet" : "magnet:?xt=urn:btih:D8D1F3BE5705657842DE2A8B68BBF2CB0250D6DC&dn=Scooby-Doo%21+Mystery+Incorporated+Complete+Season+2+1080P+WEB-DL&tr=http%3A%2F%2Fp4p.arenabg.com%3A1337%2Fannounce&tr=udp%3A%2F%2F47.ip-51-68-199.eu%3A6969%2Fannounce&tr=udp%3A%2F%2F9.rarbg.me%3A2780%2Fannounce&tr=udp%3A%2F%2F9.rarbg.to%3A2710%2Fannounce&tr=udp%3A%2F%2F9.rarbg.to%3A2730%2Fannounce&tr=udp%3A%2F%2F9.rarbg.to%3A2920%2Fannounce&tr=udp%3A%2F%2Fopen.stealth.si%3A80%2Fannounce&tr=udp%3A%2F%2Fopentracker.i2p.rocks%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.cyberia.is%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.dler.org%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.internetwarriors.net%3A1337%2Fannounce&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=udp%3A%2F%2Ftracker.pirateparty.gr%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.tiny-vps.com%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.torrent.eu.org%3A451%2Fannounce"
   }
 ];
 
@@ -195,33 +212,23 @@ function refineAndRankTorrents(candidates, query) {
     return true;
   });
 
-
-const ranked = unique
-  .map(c => {
-    const meta = parseReleaseMetadata(c.title);
-    const score = scoreTorrentCandidate(c, query);
-
-    return {
-      ...c,
-      resolution: meta.resolution,
-      cleanTitle: meta.cleanTitle,
-      score
-    };
-  })
-  .filter(c => c.score > 0)
-  .sort((a, b) => {
-    // YTS results always appear before other providers.
-    const aIsYts = a.provider === 'YTS';
-    const bIsYts = b.provider === 'YTS';
-
-    if (aIsYts !== bIsYts) {
-      return aIsYts ? -1 : 1;
-    }
-
-    // Preserve relevance ranking within each provider group.
-    return b.score - a.score;
-  });
-
+  const ranked = unique
+    .map(c => {
+      const meta = parseReleaseMetadata(c.title);
+      const score = scoreTorrentCandidate(c, query);
+      return {
+        ...c,
+        resolution: meta.resolution,
+        cleanTitle: meta.cleanTitle,
+        score
+      };
+    })
+    .filter(c => c.score > 0)
+    .sort((a, b) => {
+      // Put YTS releases first, then rank within each provider group by stream score.
+      const providerPriority = Number(b.provider === 'YTS') - Number(a.provider === 'YTS');
+      return providerPriority || (b.score - a.score);
+    });
 
   console.log(`\n[Search Refinement] Kept ${ranked.length} of ${candidates.length} raw results for "${query}":`);
   ranked.slice(0, 5).forEach((c, idx) => {
@@ -237,13 +244,13 @@ const ranked = unique
 // Search YTS and convert its movie/torrent records into this app's
 // existing candidate shape. The returned source is a magnet URI, not a
 // direct video URL; the existing server-side WebTorrent routes handle playback.
-async function searchYts(query) {
+async function searchYts(query, requestedLimit = 50) {
   const results = [];
 
   try {
     const url = new URL(YTS_API_BASE);
     url.searchParams.set('query_term', query);
-    url.searchParams.set('limit', '20');
+    url.searchParams.set('limit', String(Math.max(1, Math.min(50, Number.parseInt(requestedLimit, 10) || 50))));
     url.searchParams.set('sort_by', 'seeds');
     url.searchParams.set('order_by', 'desc');
 
@@ -335,7 +342,7 @@ async function searchYts(query) {
 // ============================================================================
 // 3. INDEXER PROVIDERS
 // ============================================================================
-async function searchTorrentIndexers(query) {
+async function searchTorrentIndexers(query, ytsLimit = 50) {
   const results = [];
 
   if (query.startsWith('magnet:?') || /^[a-fA-F0-9]{40}$/.test(query.trim())) {
@@ -381,38 +388,22 @@ async function searchTorrentIndexers(query) {
   }
 
   // Search providers concurrently so a slow YTS response doesn't delay Archive results.
-  const ytsPromise = searchYts(query);
- 
+  const ytsPromise = searchYts(query, ytsLimit);
   const archivePromise = (async () => {
     const archiveResults = [];
-
     try {
       const tokens = tokenize(query);
-
       if (tokens.length > 0) {
         const andTitleClause = tokens.map(t => `"${t}"`).join(' AND ');
-        const strictIaQuery =
-          `title:(${andTitleClause}) AND mediatype:(movies) ` +
-          `AND -title:(commercial OR promo OR trailer OR podcast OR opening)`;
-
-        const iaUrl =
-          `https://archive.org/advancedsearch.php?q=${encodeURIComponent(strictIaQuery)}` +
-          `&fl[]=identifier,title,year,downloads,item_size` +
-          `&sort[]=downloads+desc&rows=15&page=1&output=json`;
-
-        const res = await fetch(iaUrl, {
-          signal: AbortSignal.timeout(5000)
-        });
+        const strictIaQuery = `title:(${andTitleClause}) AND mediatype:(movies) AND -title:(commercial OR promo OR trailer OR podcast OR opening)`;
+        const iaUrl = `https://archive.org/advancedsearch.php?q=${encodeURIComponent(strictIaQuery)}&fl[]=identifier,title,year,downloads,item_size&sort[]=downloads+desc&rows=15&page=1&output=json`;
+        const res = await fetch(iaUrl, { signal: AbortSignal.timeout(5000) });
 
         if (res.ok) {
           const data = await res.json();
           const docs = data?.response?.docs || [];
-
           for (const doc of docs) {
-            const sizeMB = Math.round(
-              (doc.item_size || 0) / (1024 * 1024)
-            );
-
+            const sizeMB = Math.round((doc.item_size || 0) / (1024 * 1024));
             if (sizeMB < 50) continue;
 
             archiveResults.push({
@@ -432,10 +423,8 @@ async function searchTorrentIndexers(query) {
     } catch (err) {
       console.error(`[Archive Provider Error] ${err.message}`);
     }
-
     return archiveResults;
   })();
-
 
   const [ytsResults, archiveResults] = await Promise.all([ytsPromise, archivePromise]);
   results.push(...ytsResults, ...archiveResults);
@@ -445,218 +434,164 @@ async function searchTorrentIndexers(query) {
 // ============================================================================
 // 4. WEBTORRENT SWARM & LIFECYCLE MANAGER
 // ============================================================================
-const activeTorrents = new Map(); // Primary key -> entry
-const torrentEntriesByHash = new Map(); // Info hash -> entry
-const sourceAliases = new Map(); // Source URL/magnet -> primary key
+const activeTorrents = new Map();
+const curatedIds = new Set(CATALOG.map(item => item.id));
 
-const TORRENT_IDLE_TIMEOUT_MS = 10 * 60 * 1000;
-const STATS_INTERVAL_MS = 5000;
+function closeEntryStreams(entry) {
+  if (!entry?.openStreams) return;
 
-function getInfoHash(source) {
-  const match = String(source || '').match(/xt=urn:btih:([a-fA-F0-9]{40}|[a-zA-Z2-7]{32})/i);
-  return match ? match[1].toLowerCase() : null;
-}
-function pauseTorrentDownload(entry) {
-  if (!entry?.torrent || entry.torrent.destroyed) return;
-
-  const torrent = entry.torrent;
-
-  // Stop selecting pieces for every file in this torrent.
-  for (const file of torrent.files) {
-    try {
-      file.deselect();
-    } catch (_) {}
+  // Deselect files before clearing bookkeeping; the caller may then destroy the
+  // torrent session to ensure no pieces continue downloading in the background.
+  const selectedFiles = new Set(entry.streamFiles?.values?.() || []);
+  for (const file of entry.pauseTimers?.keys?.() || []) selectedFiles.add(file);
+  for (const timer of entry.pauseTimers?.values?.() || []) clearTimeout(timer);
+  entry.pauseTimers?.clear();
+  for (const stream of [...entry.openStreams]) {
+    try { stream.destroy(); } catch (_) {}
   }
-
-  console.log(`[Bandwidth] Paused background download: ${torrent.name}`);
-}
-function getEntry(key, source) {
-  const aliasKey = sourceAliases.get(String(source || ''));
-  const hash = getInfoHash(source);
-
-  return activeTorrents.get(key) ||
-    (aliasKey ? activeTorrents.get(aliasKey) : null) ||
-    (hash ? torrentEntriesByHash.get(hash) : null) ||
-    null;
+  for (const file of selectedFiles) {
+    try { file.deselect(); } catch (_) {}
+  }
+  entry.openStreams.clear();
+  entry.streamFiles?.clear();
 }
 
 function destroyTorrentEntry(key, entry) {
   if (entry.statsInterval) clearInterval(entry.statsInterval);
-
-  for (const stream of entry.openStreams) {
-    try { stream.destroy(); } catch (_) {}
-  }
-  entry.openStreams.clear();
-
+  entry.statsInterval = null;
+  closeEntryStreams(entry);
   if (entry.torrent && !entry.torrent.destroyed) {
-    try { entry.torrent.destroy(); } catch (_) {}
+    try { entry.torrent.destroy({ destroyStore: true }); } catch (_) {}
   }
-
   if (activeTorrents.get(key) === entry) activeTorrents.delete(key);
+}
 
-  if (entry.infoHash && torrentEntriesByHash.get(entry.infoHash) === entry) {
-    torrentEntriesByHash.delete(entry.infoHash);
-  }
-
-  for (const [source, aliasKey] of sourceAliases.entries()) {
-    if (aliasKey === key) sourceAliases.delete(source);
+// Any torrent session opened for inspection but not actively streaming is
+// removed after a short idle timeout, including curated catalogue items.
+const DYNAMIC_IDLE_TIMEOUT_MS = 60 * 1000;
+function stopDynamicTorrents() {
+  const now = Date.now();
+  for (const [key, entry] of activeTorrents.entries()) {
+    if (entry.openStreams.size > 0) continue;
+    if (now - (entry.lastUsedAt || now) < DYNAMIC_IDLE_TIMEOUT_MS) continue;
+    console.log(`[Cleanup] Removing idle torrent session: ${String(key).slice(0, 45)}...`);
+    destroyTorrentEntry(key, entry);
   }
 }
 
-function getReadyTorrent(key, torrentSource) {
-  const source = String(torrentSource);
-  const knownHash = getInfoHash(source);
-  const existing = getEntry(key, source);
+function stopActiveStreams() {
+  for (const entry of activeTorrents.values()) {
+    closeEntryStreams(entry);
+    entry.lastUsedAt = Date.now();
+  }
+}
 
+function resolveTorrentSource(source) {
+  // The catalogue is warmed by catalogue ID, while the UI passes magnet URLs.
+  // Resolve those URLs back to the warmed entry to avoid adding a second swarm.
+  const curated = CATALOG.find(item => item.magnet === source);
+  return curated
+    ? { key: curated.id, source: curated.magnet, isCurated: true }
+    : { key: source, source, isCurated: false };
+}
+
+function getReadyTorrent(key, torrentSource, isCurated = curatedIds.has(key)) {
+  const existing = activeTorrents.get(key);
   if (existing) {
     existing.lastUsedAt = Date.now();
-    sourceAliases.set(source, existing.key);
     return existing.promise;
   }
 
   const entry = {
-    key,
-    source,
-    torrent: null,
-    infoHash: knownHash,
     promise: null,
+    torrent: null,
     statsInterval: null,
     openStreams: new Set(),
+    streamFiles: new Map(),
+    pauseTimers: new Map(),
+    isCurated,
     lastUsedAt: Date.now()
   };
 
-  // Register before client.add() so concurrent requests share one promise.
-  activeTorrents.set(key, entry);
-  sourceAliases.set(source, key);
-  if (knownHash) torrentEntriesByHash.set(knownHash, entry);
-
   entry.promise = new Promise((resolve, reject) => {
-    console.log(`\n[Torrent] Opening: ${source.slice(0, 100)}`);
+    console.log(`\n[Torrent] Opening ${isCurated ? 'curated' : 'search'} source on explicit selection: ${String(torrentSource).slice(0, 80)}`);
 
+    let settled = false;
     let torrent;
-
     try {
-      // WebTorrent merges these trackers with the trackers in the magnet.
-      torrent = client.add(source, { announce: DEFAULT_TRACKERS });
+      torrent = client.add(torrentSource, { announce: DEFAULT_TRACKERS });
       entry.torrent = torrent;
     } catch (err) {
-      destroyTorrentEntry(key, entry);
+      if (activeTorrents.get(key) === entry) activeTorrents.delete(key);
       reject(err);
       return;
     }
 
-    let settled = false;
-
     torrent.once('error', (err) => {
       console.error(`[Torrent Error] ${err.message}`);
-
       if (entry.statsInterval) clearInterval(entry.statsInterval);
-
+      entry.statsInterval = null;
       if (!settled) {
         settled = true;
         reject(err);
       }
-
-      // Remove failed entries so a later request can retry.
-      if (activeTorrents.get(key) === entry) {
-        destroyTorrentEntry(key, entry);
-      }
+      if (activeTorrents.get(key) === entry) activeTorrents.delete(key);
     });
 
     torrent.once('metadata', () => {
       if (settled) return;
       settled = true;
+      torrent.setMaxListeners(0);
+      console.log(`[Torrent] Metadata ready! Found ${torrent.files.length} files in "${torrent.name}"`);
 
-      entry.infoHash = String(torrent.infoHash || knownHash || '').toLowerCase();
-
-      // If another request already mounted this same torrent, reuse that entry.
-      const duplicate = entry.infoHash
-        ? torrentEntriesByHash.get(entry.infoHash)
-        : null;
-
-      if (duplicate && duplicate !== entry) {
-        sourceAliases.set(source, duplicate.key);
-        if (activeTorrents.get(key) === entry) activeTorrents.delete(key);
-
-        try { torrent.destroy(); } catch (_) {}
-
-        duplicate.lastUsedAt = Date.now();
-        resolve(duplicate.torrent || duplicate.promise);
-        return;
+      // Keep peer discovery alive without downloading files in the background.
+      if (torrent.pieces?.length) {
+        try { torrent.deselect(0, torrent.pieces.length - 1, false); } catch (_) {}
       }
 
-      if (entry.infoHash) torrentEntriesByHash.set(entry.infoHash, entry);
-
-      console.log(
-        `[Torrent] Metadata ready: "${torrent.name}" | ` +
-        `${torrent.files.length} files | ${torrent.numPeers} peers`
-      );
-
-      // Don't deselect every piece here. File streaming will prioritize the
-      // requested video and WebTorrent can fetch its required pieces.
       entry.statsInterval = setInterval(() => {
         if (!entry.torrent || entry.torrent.destroyed) {
           clearInterval(entry.statsInterval);
+          entry.statsInterval = null;
           return;
         }
-
         const speedMB = (entry.torrent.downloadSpeed / (1024 * 1024)).toFixed(2);
-        console.log(
-          `[Swarm] "${entry.torrent.name.slice(0, 30)}" | ` +
-          `Peers: ${entry.torrent.numPeers} | Download: ${speedMB} MB/s`
-        );
-      }, STATS_INTERVAL_MS);
-
+        const progress = (entry.torrent.progress * 100).toFixed(1);
+        console.log(`[Swarm] "${String(entry.torrent.name).slice(0, 25)}" | Peers: ${entry.torrent.numPeers} | Speed: ${speedMB} MB/s | Downloaded: ${progress}% | Active streams: ${entry.openStreams.size} | Curated: ${entry.isCurated}`);
+      }, 10000);
+      entry.statsInterval.unref?.();
       resolve(torrent);
     });
   });
 
+  activeTorrents.set(key, entry);
+  entry.lastUsedAt = Date.now();
   return entry.promise;
 }
 
-// Periodically remove only torrents that have been idle for a while.
-// Active streams are never stopped by this cleanup.
-const torrentCleanupInterval = setInterval(() => {
-  const now = Date.now();
-
-  for (const [key, entry] of activeTorrents.entries()) {
-    if (
-      entry.openStreams.size === 0 &&
-      now - entry.lastUsedAt > TORRENT_IDLE_TIMEOUT_MS
-    ) {
-      console.log(`[Cleanup] Removing idle torrent: ${key.slice(0, 45)}`);
-      destroyTorrentEntry(key, entry);
-    }
-  }
-}, 60 * 1000);
-
-torrentCleanupInterval.unref?.();
-
-// General file-based range streaming
+// Torrent sessions are created only on explicit user selection; no startup warmup.\n\n// General file-based range streaming
 function pipeFileToResponse(key, file, req, res) {
-  const entry = getEntry(key, key);
+  if (!file) {
+    if (!res.headersSent) res.status(404).send('No playable video file found in this torrent');
+    return;
+  }
+
+  const entry = activeTorrents.get(key);
   if (entry) entry.lastUsedAt = Date.now();
-
-  const extension = file.name.split('.').pop()?.toLowerCase();
-  const contentType = extension === 'mkv'
-    ? 'video/x-matroska'
-    : extension === 'webm'
-      ? 'video/webm'
-      : 'video/mp4';
-
+  const ext = String(file.name || '').toLowerCase().split('.').pop();
+  const contentType = ext === 'webm' ? 'video/webm' : ext === 'mkv' ? 'video/x-matroska' : 'video/mp4';
   const range = req.headers.range;
   let start = 0;
   let end = file.length - 1;
   let statusCode = 200;
 
+  // Browsers use byte ranges for seeking and often probe with suffix ranges.
   if (range) {
     const match = /^bytes=(\d*)-(\d*)$/.exec(range.trim());
-
     if (!match || (!match[1] && !match[2])) {
       res.setHeader('Content-Range', `bytes */${file.length}`);
       return res.status(416).end();
     }
-
     if (!match[1]) {
       const suffixLength = Number(match[2]);
       if (!Number.isSafeInteger(suffixLength) || suffixLength <= 0) {
@@ -668,18 +603,11 @@ function pipeFileToResponse(key, file, req, res) {
       start = Number(match[1]);
       if (match[2]) end = Number(match[2]);
     }
-
-    if (
-      !Number.isSafeInteger(start) ||
-      !Number.isSafeInteger(end) ||
-      start < 0 ||
-      start >= file.length ||
-      end < start
-    ) {
+    if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) ||
+        start < 0 || start >= file.length || end < start) {
       res.setHeader('Content-Range', `bytes */${file.length}`);
       return res.status(416).end();
     }
-
     end = Math.min(end, file.length - 1);
     statusCode = 206;
   }
@@ -690,62 +618,167 @@ function pipeFileToResponse(key, file, req, res) {
     'Content-Length': end - start + 1,
     'Cache-Control': 'no-store'
   };
-
-  if (statusCode === 206) {
-    headers['Content-Range'] = `bytes ${start}-${end}/${file.length}`;
-  }
-
+  if (statusCode === 206) headers['Content-Range'] = `bytes ${start}-${end}/${file.length}`;
   res.writeHead(statusCode, headers);
 
-  // Selecting the file gives its pieces download priority for playback.
-try {
-  file.select(10);
-} catch (_) {}
+  // Explicitly select the requested file so WebTorrent prioritizes the pieces
+  // needed by this stream. Metadata discovery alone leaves every piece deselected.
+  if (entry?.pauseTimers?.has(file)) {
+    clearTimeout(entry.pauseTimers.get(file));
+    entry.pauseTimers.delete(file);
+  }
+  try { file.select(10); } catch (err) {
+    console.warn(`[Stream] Could not prioritize ${file.name}: ${err.message}`);
+  }
+
   const stream = file.createReadStream({ start, end });
-
-  if (entry) entry.openStreams.add(stream);
-
-  const cleanup = () => {
-  if (!stream.destroyed) {
-    try {
-      stream.destroy();
-    } catch (_) {}
-  }
-
   if (entry) {
-    entry.openStreams.delete(stream);
-    entry.lastUsedAt = Date.now();
-
-    // Don't download in the background after the player closes.
-    if (entry.openStreams.size === 0) {
-      pauseTorrentDownload(entry);
-    }
+    entry.openStreams.add(stream);
+    entry.streamFiles.set(stream, file);
   }
-};
+
+  let cleaned = false;
+  const cleanup = () => {
+    if (cleaned) return;
+    cleaned = true;
+
+    if (entry) {
+      const wasTracked = entry.openStreams.delete(stream);
+      entry.streamFiles.delete(stream);
+      entry.lastUsedAt = Date.now();
+      // Only deselect this file when no other HTTP range/stream is using it.
+      const stillInUse = [...entry.streamFiles.values()].some(activeFile => activeFile === file);
+      if (wasTracked && !stillInUse) {
+        // Browsers often issue a sequence of short range requests while playing.
+        // A short grace period prevents deselect/reselect churn between ranges.
+        const oldTimer = entry.pauseTimers.get(file);
+        if (oldTimer) clearTimeout(oldTimer);
+        const timer = setTimeout(() => {
+          entry.pauseTimers.delete(file);
+          const inUse = [...entry.streamFiles.values()].some(activeFile => activeFile === file);
+          if (!inUse) {
+            try { file.deselect(); } catch (_) {}
+            console.log(`[Bandwidth] Paused file after idle grace period: ${file.name}`);
+          }
+        }, 15000);
+        timer.unref?.();
+        entry.pauseTimers.set(file, timer);
+      }
+    }
+    if (!stream.destroyed) {
+      try { stream.destroy(); } catch (_) {}
+    }
+  };
 
   stream.on('error', (err) => {
-    if (!res.destroyed && !res.headersSent) {
-      res.status(500).end('Unable to read video stream');
-    } else if (!res.destroyed) {
-      res.destroy(err);
+    const msg = err?.message || '';
+    if (err.code !== 'ERR_STREAM_PREMATURE_CLOSE' &&
+        !msg.includes('Writable stream closed') &&
+        !msg.includes('Torrent is removed')) {
+      console.error('[Stream Read Error]', msg);
     }
-
-    const message = err?.message || '';
-    if (
-      err.code !== 'ERR_STREAM_PREMATURE_CLOSE' &&
-      !message.includes('Writable stream closed') &&
-      !message.includes('Torrent is removed')
-    ) {
-      console.error('[Stream Read Error]', message);
+    if (!res.destroyed && !res.writableEnded) {
+      if (!res.headersSent) res.status(500).end('Unable to read video stream');
+      else res.destroy(err);
     }
+    cleanup();
   });
 
-  res.on('close', cleanup);
+  // IMPORTANT: do not use req.close here. For normal GET requests, IncomingMessage
+  // can close after the request has been received, before the response finishes.
+  // Listening to it was destroying the media stream prematurely and causing stalls.
+  stream.once('close', cleanup);
+  res.once('close', cleanup);
+  res.once('finish', cleanup);
   stream.pipe(res);
 }
+
 // ============================================================================
 // 5. EXPRESS API ROUTES
 // ============================================================================
+app.get('/api/embed-config', (_req, res) => {
+  const config = getEmbedProviderConfig();
+  res.json({ enabled: Boolean(config), providerName: config?.name || null });
+});
+
+app.post('/api/external-player', (req, res) => {
+  const config = getEmbedProviderConfig();
+  if (!config) {
+    return res.status(503).json({ error: 'External playback is not configured. Check the provider HTTPS origin and URL templates.' });
+  }
+
+  const mediaType = req.body?.mediaType === 'tv' ? 'tv' : req.body?.mediaType === 'movie' ? 'movie' : null;
+  const id = String(req.body?.id || '').trim();
+  if (!mediaType || !/^[A-Za-z0-9._:-]{1,80}$/.test(id)) {
+    return res.status(400).json({ error: 'Provide a valid IMDb/TMDB-style ID and choose movie or TV.' });
+  }
+
+  let season = null;
+  let episode = null;
+  if (mediaType === 'tv') {
+    season = Number(req.body?.season);
+    episode = Number(req.body?.episode);
+    if (!Number.isInteger(season) || season < 0 || season > 99 || !Number.isInteger(episode) || episode < 1 || episode > 999) {
+      return res.status(400).json({ error: 'TV playback requires a valid season (0–99) and episode (1–999).' });
+    }
+  }
+
+  const template = mediaType === 'movie' ? config.moviePath : config.tvPath;
+  const path = template
+    .replaceAll('{id}', encodeURIComponent(id))
+    .replaceAll('{season}', encodeURIComponent(String(season ?? '')))
+    .replaceAll('{episode}', encodeURIComponent(String(episode ?? '')));
+  try {
+    const url = new URL(path, config.base);
+    if (url.origin !== config.base.origin || url.protocol !== 'https:') {
+      return res.status(500).json({ error: 'Configured embed path must remain on the configured HTTPS provider origin.' });
+    }
+    res.json({ url: url.toString(), providerName: config.name, mediaType });
+  } catch (_) {
+    res.status(500).json({ error: 'The configured provider path is invalid.' });
+  }
+});
+
+app.get('/api/title-search', async (req, res) => {
+  const query = String(req.query.q || '').trim();
+  const mediaType = req.query.type === 'tv' ? 'tv' : req.query.type === 'movie' ? 'movie' : null;
+  if (!mediaType) return res.status(400).json({ error: 'Choose movie or TV show.' });
+  if (query.length < 2) return res.status(400).json({ error: 'Enter at least two characters to search.' });
+  if (query.length > 120) return res.status(400).json({ error: 'Search query is too long.' });
+  if (!TMDB_API_READ_ACCESS_TOKEN) {
+    return res.status(503).json({ error: 'TMDB search is not configured. Set TMDB_API_READ_ACCESS_TOKEN on the server and restart it.' });
+  }
+
+  try {
+    const url = new URL(`https://api.themoviedb.org/3/search/${mediaType}`);
+    url.searchParams.set('query', query);
+    url.searchParams.set('include_adult', 'false');
+    url.searchParams.set('language', 'en-US');
+    url.searchParams.set('page', '1');
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${TMDB_API_READ_ACCESS_TOKEN}`, accept: 'application/json' },
+      signal: AbortSignal.timeout(10000)
+    });
+    if (!response.ok) {
+      console.error(`TMDB search failed: HTTP ${response.status}`);
+      return res.status(502).json({ error: 'TMDB search failed. Check the API token and try again.' });
+    }
+    const data = await response.json();
+    const results = (Array.isArray(data.results) ? data.results : []).slice(0, 12).map(item => ({
+      tmdbId: String(item.id),
+      mediaType,
+      title: String(mediaType === 'movie' ? (item.title || item.original_title || 'Untitled') : (item.name || item.original_name || 'Untitled')),
+      year: String((mediaType === 'movie' ? item.release_date : item.first_air_date) || '').slice(0, 4),
+      overview: String(item.overview || ''),
+      posterUrl: item.poster_path ? `https://image.tmdb.org/t/p/w185${item.poster_path}` : null
+    }));
+    res.json({ results });
+  } catch (error) {
+    console.error('TMDB title search error:', error.message);
+    res.status(502).json({ error: 'Could not reach TMDB. Try again in a moment.' });
+  }
+});
+
 app.get('/api/library', (req, res) => {
   const query = req.query.q ? req.query.q.toLowerCase() : '';
   const filtered = CATALOG.filter(item =>
@@ -757,9 +790,10 @@ app.get('/api/library', (req, res) => {
 app.get('/api/torrent-search', async (req, res) => {
   const query = (req.query.q || '').trim();
   if (!query) return res.status(400).json({ error: 'Search query is required' });
+  const requestedLimit = Math.max(1, Math.min(50, Number.parseInt(req.query.limit, 10) || 50));
 
-  console.log(`\n[Search] Querying indexers for: "${query}"...`);
-  const candidates = await searchTorrentIndexers(query);
+  console.log(`\n[Search] Querying indexers for: "${query}" (YTS limit ${requestedLimit})...`);
+  const candidates = await searchTorrentIndexers(query, requestedLimit);
   const { best, results } = refineAndRankTorrents(candidates, query);
 
   res.json({ best, results });
@@ -771,7 +805,8 @@ app.get('/api/torrent-files', async (req, res) => {
   if (!source) return res.status(400).json({ error: 'Missing torrent source' });
 
   try {
-    const torrent = await getReadyTorrent(source, source);
+    const resolved = resolveTorrentSource(source);
+    const torrent = await getReadyTorrent(resolved.key, resolved.source, resolved.isCurated);
     
     // Filter out video files
     const videoFiles = [];
@@ -803,68 +838,61 @@ app.get('/api/stream/:id', async (req, res) => {
   if (!media) return res.status(404).send('Media item not found');
 
   try {
-    const torrent = await getReadyTorrent(media.id, media.magnet);
-
-    const videoFiles = torrent.files.filter(file =>
-      /\.(mp4|mkv|webm)$/i.test(file.name) &&
-      !file.name.toLowerCase().includes('sample')
-    );
-
+    const torrent = await getReadyTorrent(media.id, media.magnet, true);
+    const videoFiles = torrent.files.filter(f => f.name.endsWith('.mp4') || f.name.endsWith('.mkv') || f.name.endsWith('.webm'));
     const file = videoFiles.sort((a, b) => b.length - a.length)[0];
-
-    if (!file) {
-      return res.status(404).send('No playable video file found in this torrent');
-    }
-
     pipeFileToResponse(media.id, file, req, res);
   } catch (err) {
-    console.error('[Curated Stream Error]', err.message);
-    if (!res.headersSent) res.status(500).send('Failed to load torrent');
+    if (!res.headersSent) res.status(500).send('Failed to load torrent metadata');
   }
 });
 
 // Stream a specific file index from a dynamic torrent
 app.get('/api/stream-file', async (req, res) => {
   const source = req.query.source;
-  const fileIndex = Number.parseInt(req.query.fileIndex, 10);
+  const fileIndex = parseInt(req.query.fileIndex, 10);
 
-  if (!source || !Number.isInteger(fileIndex) || fileIndex < 0) {
-    return res.status(400).send('Missing or invalid source/fileIndex');
+  if (!source || isNaN(fileIndex)) {
+    return res.status(400).send('Missing source or fileIndex parameter');
   }
 
   try {
-    const torrent = await getReadyTorrent(source, source);
+    const resolved = resolveTorrentSource(source);
+    const torrent = await getReadyTorrent(resolved.key, resolved.source, resolved.isCurated);
     const file = torrent.files[fileIndex];
-
     if (!file) return res.status(404).send('File index not found in torrent');
 
-    if (!/\.(mp4|mkv|webm)$/i.test(file.name)) {
-      return res.status(415).send('Selected file is not a supported video format');
-    }
-
-    pipeFileToResponse(source, file, req, res);
+    pipeFileToResponse(resolved.key, file, req, res);
   } catch (err) {
-    console.error('[Dynamic Stream Error]', err.message);
     if (!res.headersSent) res.status(500).send('Failed to stream selected file');
   }
 });
 
 app.post('/api/stop-stream', (req, res) => {
-  for (const entry of activeTorrents.values()) {
-    for (const stream of entry.openStreams) {
-      try {
-        stream.destroy();
-      } catch (_) {}
-    }
-
-    entry.openStreams.clear();
-    entry.lastUsedAt = Date.now();
+  // Closing the player destroys every torrent session so no swarm can continue
+  // downloading in the background. A later play action creates a fresh session.
+  for (const [key, entry] of [...activeTorrents.entries()]) {
+    destroyTorrentEntry(key, entry);
   }
-
-  console.log('[Player Closed] Streams closed; torrent sessions retained temporarily.');
-  res.json({ stopped: true });
+  console.log('[Player Closed] All streams and torrent sessions destroyed; background downloading stopped.');
+  res.json({ stopped: true, torrentSessionsRetained: false });
 });
+
+// Reap idle dynamic sessions periodically, without affecting active playback.
+const dynamicCleanupInterval = setInterval(stopDynamicTorrents, 60 * 1000);
+dynamicCleanupInterval.unref?.();
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
+  console.log('[Torrent Lifecycle] Background warmup disabled; torrents start only after explicit selection.');
 });
+
+// Graceful shutdown: release all sockets and torrent stores when the server exits.
+async function shutdown(signal) {
+  console.log(`[Shutdown] ${signal} received; closing torrent sessions...`);
+  for (const [key, entry] of activeTorrents.entries()) destroyTorrentEntry(key, entry);
+  try { await client.destroy(); } catch (_) {}
+  process.exit(0);
+}
+process.once('SIGINT', () => void shutdown('SIGINT'));
+process.once('SIGTERM', () => void shutdown('SIGTERM'));

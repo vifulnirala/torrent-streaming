@@ -1,106 +1,626 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#0a0b10">
-  <title>The Mystery Vault — Movie Discovery</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1020">
+  <meta name="description" content="Search available torrents and stream video files.">
+  <title>Mystery Vault — Discover & Stream</title>
   <style>
-    :root{color-scheme:dark;--bg:#0a0b10;--panel:#141722;--panel2:#1c2030;--line:rgba(255,255,255,.09);--text:#f5f6fa;--muted:#969db0;--gold:#f6ce45;--gold2:#ffe680;--radius:18px}
-    *{box-sizing:border-box;margin:0;padding:0}
-    html{scroll-behavior:smooth}
-    body{min-height:100vh;background:radial-gradient(ellipse at 14% -10%,rgba(246,206,69,.13),transparent 36%),radial-gradient(ellipse at 100% 20%,rgba(83,102,190,.12),transparent 32%),var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.5}
-    button,input{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,.card:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
-    .shell{width:min(1320px,calc(100% - 48px));margin-inline:auto}
-    header{padding:28px 0 30px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:62px}
-    .brand{display:flex;align-items:center;gap:12px;font-weight:850;letter-spacing:.08em;font-size:.9rem}.brand-mark{display:grid;place-items:center;width:42px;height:42px;border-radius:14px;background:var(--gold);color:#151515;font-size:1.25rem;box-shadow:0 8px 28px #f6ce4529}
-    .top-pill{border:1px solid var(--line);background:#ffffff06;color:var(--muted);border-radius:999px;padding:8px 13px;font-size:.76rem;letter-spacing:.08em}
-    .hero{max-width:850px;margin:auto;text-align:center;animation:rise .7s both}.eyebrow{color:var(--gold);font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.2em;margin-bottom:15px}
-    h1{font-size:clamp(2.6rem,7vw,5.2rem);line-height:1;letter-spacing:-.07em;font-weight:850}h1 span{color:var(--gold)}
-    .hero-copy{color:var(--muted);max-width:570px;margin:20px auto 29px;font-size:1rem;line-height:1.7}
-    .search-panel{display:flex;align-items:center;gap:8px;padding:8px;border:1px solid #ffffff1c;background:#141722df;border-radius:17px;box-shadow:0 20px 70px #0004;transition:border-color .2s,box-shadow .2s}.search-panel:focus-within{border-color:#f6ce4566;box-shadow:0 0 0 4px #f6ce4510,0 20px 70px #0004}
-    .search-icon{padding-left:12px;color:var(--muted);font-size:1.25rem}.search-panel input{flex:1;min-width:0;padding:13px 5px;border:0;outline:0;background:transparent;color:var(--text)}.search-panel input::placeholder{color:#777f94}
-    .btn{border:0;border-radius:11px;padding:12px 17px;font-weight:750;font-size:.9rem;white-space:nowrap;transition:transform .18s,background .18s,border-color .18s,box-shadow .18s}.btn:hover{transform:translateY(-2px)}.btn:active{transform:translateY(0) scale(.98)}.btn-primary{background:var(--gold);color:#171717;box-shadow:0 5px 18px #f6ce451a}.btn-primary:hover{background:var(--gold2);box-shadow:0 8px 25px #f6ce4525}.btn-secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line)}.btn-secondary:hover{border-color:#ffffff2d;background:#242a3c}
-    .quick-hint{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:8px;margin-top:15px;color:#777f93;font-size:.8rem}.quick-hint button{padding:5px 11px;border:1px solid var(--line);border-radius:999px;background:#ffffff04;color:#b8bfd0;font-size:.77rem;transition:all .2s}.quick-hint button:hover{color:var(--gold);border-color:#f6ce4566;background:#f6ce450c}
-    main{padding:8px 0 72px}.status{display:none;align-items:center;gap:11px;margin:10px 0 26px;padding:13px 16px;border:1px solid #f6ce4533;background:#f6ce450a;border-radius:13px;color:#e9dca5;line-height:1.45;animation:rise .25s both}.status.visible{display:flex}.status-text{flex:1;min-width:0}.spinner{width:17px;height:17px;flex:0 0 17px;border:2px solid #f6ce4540;border-top-color:var(--gold);border-radius:50%;animation:spin .75s linear infinite}.spinner.hidden{display:none}
-    .section{margin-top:37px;animation:rise .5s both}.section-head{display:flex;align-items:end;justify-content:space-between;gap:15px;margin-bottom:18px}.section-kicker{color:var(--gold);font-size:.67rem;text-transform:uppercase;letter-spacing:.17em;font-weight:850;margin-bottom:6px}h2{font-size:clamp(1.3rem,3vw,1.7rem);letter-spacing:-.04em}.section-subtitle{color:var(--muted);font-size:.84rem;margin-top:5px}.count{color:var(--muted);font-size:.78rem;white-space:nowrap;padding-bottom:4px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:18px}.card{min-width:0;overflow:hidden;border:1px solid var(--line);border-radius:var(--radius);background:linear-gradient(155deg,#ffffff09,#ffffff02 50%),var(--panel);cursor:pointer;display:flex;flex-direction:column;animation:cardIn .45s both;transition:transform .23s ease,border-color .23s,box-shadow .23s}.card:hover{transform:translateY(-6px);border-color:#f6ce4577;box-shadow:0 18px 42px #0005,0 0 0 1px #f6ce4510}.poster-wrap{position:relative;aspect-ratio:2/3;overflow:hidden;background:#191d29}.poster{width:100%;height:100%;display:block;object-fit:cover;transition:transform .45s cubic-bezier(.2,.8,.2,1),filter .3s}.card:hover .poster{transform:scale(1.055);filter:brightness(.8)}.poster-wrap:after{content:"";position:absolute;inset:35% 0 0;background:linear-gradient(transparent,#090b10a8);pointer-events:none}.poster-tag{position:absolute;z-index:1;top:10px;left:10px;max-width:calc(100% - 20px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:5px 8px;border:1px solid #ffffff20;border-radius:7px;background:#080a0fc9;color:#f7d95f;backdrop-filter:blur(8px);font-size:.65rem;font-weight:850;letter-spacing:.04em}.play-chip{position:absolute;z-index:2;right:12px;bottom:12px;display:grid;place-items:center;width:39px;height:39px;border-radius:50%;background:var(--gold);color:#161616;box-shadow:0 5px 18px #0006;opacity:.95;transform:translateY(5px) scale(.9);transition:transform .22s,opacity .22s}.card:hover .play-chip{transform:translateY(0) scale(1);opacity:1}.card-info{padding:13px;display:flex;flex-direction:column;gap:10px;flex:1}.card-title{font-size:.89rem;line-height:1.4;font-weight:750;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.meta-row{display:flex;align-items:center;justify-content:space-between;gap:7px;margin-top:auto;color:var(--muted);font-size:.73rem}.tag{max-width:62%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-radius:6px;padding:4px 7px;color:#d4d9e5;background:#ffffff0d;font-size:.67rem}.empty{grid-column:1/-1;text-align:center;padding:42px 20px;border:1px dashed var(--line);border-radius:var(--radius);color:var(--muted)}.empty strong{display:block;color:var(--text);margin-bottom:6px}
-    /* Modals and cinema player */
-    .modal{display:none;position:fixed;inset:0;z-index:50;align-items:center;justify-content:center;padding:20px;background:#03040adf;backdrop-filter:blur(13px);animation:fadeIn .2s both}.modal.open{display:flex}.dialog{width:min(680px,100%);max-height:88vh;overflow:hidden;display:flex;flex-direction:column;border:1px solid #ffffff18;border-radius:21px;background:linear-gradient(145deg,#1b2030,#10131d 65%);box-shadow:0 35px 110px #000a;animation:dialogIn .28s both}.dialog-head{padding:23px 24px 17px;border-bottom:1px solid var(--line)}.dialog-head h2{font-size:1.15rem;overflow-wrap:anywhere}.dialog-head p{color:var(--muted);font-size:.83rem;margin-top:6px}.file-list{overflow-y:auto;padding:13px;display:flex;flex-direction:column;gap:8px}.file-item{width:100%;display:flex;align-items:center;justify-content:space-between;gap:15px;text-align:left;padding:14px;border-radius:12px;background:#ffffff06;border:1px solid var(--line);color:var(--text);transition:background .2s,border-color .2s,transform .2s}.file-item:hover{border-color:#f6ce4577;background:#f6ce450c;transform:translateX(2px)}.file-name{min-width:0;overflow-wrap:anywhere;font-size:.86rem}.file-size{color:var(--muted);font-size:.75rem;white-space:nowrap}.dialog-foot{padding:13px 20px 20px;display:flex;justify-content:flex-end}
-    #player-modal{z-index:60;background:radial-gradient(ellipse at 50% 35%,#1a2033d9,#03040af5 72%)}.player-dialog{width:min(1200px,100%);display:flex;flex-direction:column;gap:15px;animation:playerIn .32s both}.player-top{display:flex;align-items:center;justify-content:space-between;gap:16px}.player-brand{display:flex;align-items:center;gap:10px;min-width:0}.player-dot{width:9px;height:9px;flex:0 0 9px;border-radius:50%;background:var(--gold);box-shadow:0 0 15px #f6ce4588}.player-heading{min-width:0}.player-label{font-size:.65rem;color:var(--gold);font-weight:850;letter-spacing:.16em;text-transform:uppercase;margin-bottom:3px}.now-playing{font-size:clamp(.95rem,2vw,1.15rem);font-weight:750;overflow-wrap:anywhere;line-height:1.35}.icon-btn{width:43px;height:43px;flex:0 0 43px;display:grid;place-items:center;border:1px solid #ffffff20;border-radius:13px;background:#ffffff0b;color:#fff;font-size:1.55rem;transition:background .2s,transform .2s,border-color .2s}.icon-btn:hover{background:#ffffff18;border-color:#ffffff40;transform:rotate(4deg)}.video-frame{position:relative;overflow:hidden;border:1px solid #ffffff20;border-radius:18px;background:#000;box-shadow:0 25px 90px #0009,0 0 60px #f6ce4508}.video-frame:before{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;box-shadow:inset 0 0 0 1px #ffffff08;z-index:2}video{display:block;width:100%;max-height:76vh;aspect-ratio:16/9;background:#000;outline:none}.buffer-overlay{position:absolute;z-index:3;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:13px;padding:20px;text-align:center;pointer-events:none;background:#05060a70;backdrop-filter:blur(2px)}.buffer-overlay.visible{display:flex;animation:fadeIn .18s both}.buffer-overlay .spinner{width:29px;height:29px;flex-basis:29px;border-width:3px}.buffer-label{font-size:.9rem;color:#f3f3f5;max-width:440px}.player-bottom{display:flex;align-items:center;justify-content:space-between;gap:14px;color:var(--muted);font-size:.76rem}.player-tip{display:flex;align-items:center;gap:8px}.tip-icon{color:var(--gold)}.player-quality{border:1px solid var(--line);border-radius:7px;padding:5px 8px;color:#bfc5d4;background:#ffffff05;white-space:nowrap}
-    footer{padding:0 0 28px;text-align:center;color:#697186;font-size:.74rem}
-    @keyframes spin{to{transform:rotate(360deg)}}@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes cardIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes dialogIn{from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}@keyframes playerIn{from{opacity:0;transform:scale(.985) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
-    @media(max-width:760px){.shell{width:calc(100% - 28px)}header{padding-top:19px}.topbar{margin-bottom:39px}.top-pill{display:none}.search-panel{display:grid;grid-template-columns:25px minmax(0,1fr)}.search-icon{grid-row:1;grid-column:1}.search-panel input{grid-row:1;grid-column:2;width:100%}.search-panel .btn-primary,.search-panel .btn-secondary{grid-column:1/-1}.grid{grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:12px}.card-info{padding:10px}.section-head{align-items:start}.count{padding-top:4px}.modal{padding:10px}.dialog{max-height:93vh}.player-dialog{gap:12px}.video-frame{border-radius:12px}video{max-height:68vh}.player-bottom{align-items:flex-start}.player-tip{max-width:75%}}
-    @media(max-width:390px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.brand{font-size:.78rem}.hero-copy{font-size:.9rem}.btn{padding:11px 13px}.player-bottom{font-size:.7rem}}
-    @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+    :root {
+      color-scheme: dark;
+      --bg: #090d18; --surface: rgba(19, 26, 45, .82); --surface-solid: #131a2d;
+      --surface-2: #1b2540; --text: #f4f7ff; --muted: #9aa8c7; --line: rgba(169,190,255,.16);
+      --accent: #a78bfa; --accent-2: #67e8f9; --accent-ink: #101024;
+      --shadow: 0 18px 55px rgba(0,0,0,.28); --radius: 20px;
+    }
+    html[data-theme="light"] {
+      color-scheme: light;
+      --bg: #f4f6fc; --surface: rgba(255,255,255,.86); --surface-solid: #fff;
+      --surface-2: #eef1fb; --text: #172039; --muted: #63708c; --line: rgba(57,75,125,.16);
+      --accent: #6d4ce3; --accent-2: #087e9c; --accent-ink: #fff;
+      --shadow: 0 18px 55px rgba(35,49,90,.12);
+    }
+    * { box-sizing: border-box; }
+    html { min-height: 100%; scroll-behavior: smooth; }
+    body {
+      min-height: 100vh; margin: 0; color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(ellipse at 12% -10%, rgba(139,92,246,.23), transparent 38rem),
+        radial-gradient(ellipse at 95% 10%, rgba(34,211,238,.13), transparent 34rem), var(--bg);
+      transition: background .25s ease, color .25s ease;
+    }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, input:focus-visible, .card:focus-visible { outline: 3px solid var(--accent-2); outline-offset: 3px; }
+    .shell { width: min(1320px, 100%); margin: 0 auto; padding: 22px clamp(14px, 3vw, 38px) 56px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: clamp(28px, 6vw, 64px); }
+    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .brand-mark { width: 44px; height: 44px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 15px; color: #fff; background: linear-gradient(135deg, #8b5cf6, #22d3ee); box-shadow: 0 8px 28px rgba(139,92,246,.28); font-size: 22px; }
+    .brand-name { font-weight: 800; letter-spacing: -.04em; font-size: clamp(1rem, 2vw, 1.2rem); }
+    .brand-caption { color: var(--muted); font-size: .78rem; margin-top: 2px; }
+    .theme-toggle, .btn, .select-control {
+      border: 1px solid var(--line); color: var(--text); background: var(--surface);
+      border-radius: 13px; min-height: 44px; padding: 10px 14px; transition: transform .18s ease, border-color .18s ease, background .18s ease;
+    }
+    .theme-toggle:hover, .btn:hover, .select-control:hover { transform: translateY(-1px); border-color: var(--accent); }
+    .hero { max-width: 820px; margin: 0 auto 34px; text-align: center; animation: rise-in .65s both; }
+    .eyebrow { display: inline-flex; gap: 8px; align-items: center; border: 1px solid var(--line); background: var(--surface); color: var(--accent-2); padding: 7px 12px; border-radius: 999px; font-size: .78rem; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+    h1 { font-size: clamp(2.35rem, 7vw, 5rem); line-height: .99; letter-spacing: -.065em; margin: 20px 0 15px; }
+    .gradient-text { background: linear-gradient(100deg, var(--text) 12%, var(--accent) 58%, var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .hero-copy { color: var(--muted); font-size: clamp(.95rem, 2vw, 1.1rem); line-height: 1.7; max-width: 610px; margin: 0 auto 26px; }
+    .search-panel { display: flex; gap: 10px; padding: 8px; max-width: 780px; margin: 0 auto; border: 1px solid var(--line); border-radius: 19px; background: var(--surface); box-shadow: var(--shadow); backdrop-filter: blur(18px); }
+    #search { width: 100%; min-width: 0; border: 0; outline: 0; color: var(--text); background: transparent; padding: 12px 14px; font-size: 1rem; }
+    #search::placeholder { color: var(--muted); opacity: .85; }
+    .btn-primary { color: var(--accent-ink); background: linear-gradient(115deg, var(--accent), var(--accent-2)); border: 0; font-weight: 800; white-space: nowrap; box-shadow: 0 8px 24px rgba(139,92,246,.2); }
+    .btn-primary:hover { filter: brightness(1.07); }
+    .btn-secondary { background: var(--surface-2); }
+    .status { min-height: 28px; margin: 18px auto 0; color: var(--muted); text-align: center; font-size: .9rem; }
+    .status[data-kind="error"] { color: #fb7185; }
+    .status[data-kind="success"] { color: #34d399; }
+    .section { margin-top: 42px; animation: rise-in .45s both; }
+    .section-head { display: flex; align-items: end; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 17px; }
+    .section-kicker { color: var(--accent-2); font-size: .75rem; font-weight: 800; text-transform: uppercase; letter-spacing: .13em; margin-bottom: 6px; }
+    h2 { font-size: clamp(1.35rem, 3vw, 1.8rem); letter-spacing: -.04em; margin: 0; }
+    .section-note { color: var(--muted); font-size: .88rem; margin-top: 6px; }
+    .result-controls { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+    .select-control { min-height: 40px; padding: 8px 12px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr)); gap: 18px; }
+    .card { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); box-shadow: 0 6px 24px rgba(0,0,0,.08); cursor: pointer; display: flex; flex-direction: column; animation: card-in .4s both; transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease; }
+    .card:hover { transform: translateY(-5px); border-color: color-mix(in srgb, var(--accent) 65%, transparent); box-shadow: var(--shadow); }
+    .poster-wrap { position: relative; overflow: hidden; aspect-ratio: 2 / 3; background: var(--surface-2); }
+    .poster-wrap img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .45s ease; }
+    .card:hover .poster-wrap img { transform: scale(1.045); }
+    .poster-overlay { position: absolute; inset: auto 0 0; height: 45%; background: linear-gradient(transparent, rgba(5,8,18,.76)); pointer-events: none; }
+    .provider-pill { position: absolute; top: 10px; left: 10px; max-width: calc(100% - 20px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border: 1px solid rgba(255,255,255,.2); border-radius: 999px; padding: 5px 9px; color: #fff; background: rgba(8,12,27,.75); backdrop-filter: blur(12px); font-size: .68rem; font-weight: 800; }
+    .play-hint { position: absolute; right: 12px; bottom: 12px; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; color: #101024; background: #fff; box-shadow: 0 5px 18px rgba(0,0,0,.25); transform: translateY(7px); opacity: 0; transition: opacity .2s, transform .2s; }
+    .card:hover .play-hint, .card:focus-visible .play-hint { transform: translateY(0); opacity: 1; }
+    .card-info { display: flex; flex-direction: column; gap: 12px; flex: 1; padding: 13px; }
+    .card-title { font-size: .93rem; line-height: 1.4; font-weight: 750; overflow-wrap: anywhere; }
+    .meta-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: auto; color: var(--muted); font-size: .75rem; }
+    .meta-tag { border-radius: 7px; background: var(--surface-2); padding: 4px 7px; color: var(--accent-2); font-weight: 750; }
+    .empty { grid-column: 1 / -1; padding: 34px 20px; border: 1px dashed var(--line); border-radius: var(--radius); color: var(--muted); text-align: center; background: var(--surface); }
+    .load-more-wrap { display: flex; justify-content: center; margin-top: 22px; }
+    .load-more-wrap .btn { min-width: 170px; }
+    .modal { position: fixed; inset: 0; z-index: 20; display: none; align-items: center; justify-content: center; padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)); background: rgba(3,6,16,.78); backdrop-filter: blur(12px); }
+    .modal.open { display: flex; animation: fade-in .18s ease both; }
+    .modal-panel { position: relative; width: min(720px, 100%); max-height: min(84dvh, 900px); overflow: hidden; border: 1px solid var(--line); border-radius: 22px; background: var(--surface-solid); box-shadow: 0 30px 100px rgba(0,0,0,.45); display: flex; flex-direction: column; animation: modal-in .25s ease both; }
+    .modal-head { padding: 20px 20px 12px; display: flex; align-items: start; justify-content: space-between; gap: 12px; }
+    .modal-head h2 { font-size: 1.2rem; overflow-wrap: anywhere; }
+    .modal-head p { color: var(--muted); font-size: .85rem; line-height: 1.5; margin-top: 6px; }
+    .icon-btn { width: 40px; height: 40px; flex: 0 0 auto; border: 1px solid var(--line); border-radius: 12px; color: var(--text); background: var(--surface-2); font-size: 1.3rem; }
+    .file-list { overflow-y: auto; padding: 6px 16px 16px; display: flex; flex-direction: column; gap: 8px; }
+    .file-item { display: flex; align-items: center; justify-content: space-between; gap: 14px; width: 100%; padding: 14px; text-align: left; border: 1px solid var(--line); border-radius: 13px; background: var(--surface); color: var(--text); }
+    .file-item:hover { border-color: var(--accent); background: var(--surface-2); }
+    .file-name { min-width: 0; overflow-wrap: anywhere; font-size: .9rem; }
+    .file-size { flex: 0 0 auto; color: var(--muted); font-size: .78rem; }
+    .modal-foot { padding: 0 16px 16px; display: flex; justify-content: end; }
+    #player-modal .modal-panel { width: min(1200px, 100%); background: #060914; border-color: rgba(255,255,255,.15); }
+    .player-head { color: #fff; }
+    .player-head p { color: #aab4ce; }
+    #video-element { display: block; width: 100%; max-height: calc(84dvh - 120px); aspect-ratio: 16 / 9; background: #000; object-fit: contain; }
+    .player-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #aab4ce; padding: 12px 18px 16px; font-size: .8rem; }
+    .embed-panel { padding: clamp(16px, 3vw, 24px); border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); }
+    .embed-form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 18px; align-items: end; }
+    .embed-field { display: flex; flex-direction: column; gap: 7px; color: var(--muted); font-size: .8rem; font-weight: 700; }
+    .embed-field input, .embed-field select { width: 100%; min-width: 0; min-height: 44px; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--surface-solid); color: var(--text); }
+    .embed-form .btn { min-height: 44px; }
+    .embed-status { min-height: 20px; color: var(--muted); font-size: .85rem; margin-top: 12px; }
+    .title-search-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; margin-top: 16px; }
+    .title-search-row input { width: 100%; min-width: 0; min-height: 44px; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--surface-solid); color: var(--text); }
+    .title-search-results { display: grid; gap: 8px; margin-top: 12px; }
+    .title-search-result { display: grid; grid-template-columns: 54px minmax(0, 1fr) auto; gap: 12px; align-items: center; width: 100%; padding: 10px; text-align: left; border: 1px solid var(--line); border-radius: 13px; background: var(--surface-solid); color: var(--text); }
+    .title-search-result:hover { border-color: var(--accent); background: var(--surface-2); }
+    .title-search-result img, .title-search-poster-placeholder { width: 54px; height: 78px; object-fit: cover; border-radius: 7px; background: var(--surface-2); }
+    .title-search-result-copy { min-width: 0; }
+    .title-search-result-title { font-weight: 800; overflow-wrap: anywhere; }
+    .title-search-result-meta, .title-search-result-overview { color: var(--muted); font-size: .78rem; margin-top: 4px; }
+    .title-search-result-overview { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.45; }
+    @media (max-width: 520px) { .title-search-row { grid-template-columns: 1fr; } .title-search-result { grid-template-columns: 44px minmax(0, 1fr); } .title-search-result img, .title-search-poster-placeholder { width: 44px; height: 64px; } .title-search-result .btn { grid-column: 1 / -1; } }
+    #external-player-frame { display: block; width: 100%; aspect-ratio: 16 / 9; min-height: 240px; border: 0; background: #000; }
+    @media (max-width: 760px) { .embed-form { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 420px) { .embed-form { grid-template-columns: 1fr; } }
+    .footer-note { color: var(--muted); text-align: center; font-size: .78rem; margin-top: 44px; line-height: 1.6; }
+    .hidden { display: none !important; }
+    @keyframes rise-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes card-in { from { opacity: 0; transform: translateY(9px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes modal-in { from { opacity: 0; transform: translateY(10px) scale(.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    @media (min-width: 1100px) { .grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; } }
+    @media (max-width: 640px) {
+      .shell { padding: 15px 13px 38px; }
+      .topbar { margin-bottom: 36px; }
+      .brand-mark { width: 39px; height: 39px; border-radius: 13px; }
+      .brand-caption { font-size: .7rem; }
+      .hero { margin-bottom: 22px; }
+      h1 { margin-top: 16px; }
+      .search-panel { flex-direction: column; border-radius: 17px; padding: 8px; gap: 5px; }
+      #search { padding: 13px 10px; min-height: 48px; }
+      .search-panel .btn { width: 100%; }
+      .section { margin-top: 34px; }
+      .section-head { align-items: stretch; }
+      .result-controls { width: 100%; }
+      .result-controls .select-control { flex: 1; min-width: 0; }
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; }
+      .card { border-radius: 15px; }
+      .card-info { padding: 10px; gap: 9px; }
+      .card-title { font-size: .83rem; }
+      .meta-row { font-size: .68rem; }
+      .provider-pill { top: 7px; left: 7px; padding: 4px 7px; font-size: .62rem; }
+      .play-hint { opacity: 1; transform: none; width: 32px; height: 32px; }
+      .modal-panel { border-radius: 17px; max-height: 88dvh; }
+      .modal-head { padding: 16px 14px 10px; }
+      .file-list { padding: 4px 10px 12px; }
+      .file-item { padding: 12px; }
+      #video-element { max-height: 62dvh; }
+      .player-foot { align-items: start; flex-direction: column; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
   </style>
 </head>
 <body>
-  <header class="shell">
-    <div class="topbar"><div class="brand"><span class="brand-mark">✦</span><span>MYSTERY VAULT</span></div><span class="top-pill">DISCOVER · SELECT · STREAM</span></div>
-    <div class="hero">
-      <div class="eyebrow">Your next movie night starts here</div>
-      <h1>Find it. <span>Play it.</span></h1>
-      <p class="hero-copy">Search the catalog or paste a magnet URI. Discover your next watch in a cinematic, distraction-free space.</p>
-      <div class="search-panel"><span class="search-icon" aria-hidden="true">⌕</span><input type="text" id="search" autocomplete="off" spellcheck="false" placeholder="Search a title or paste a magnet URI…" aria-label="Movie title or magnet URI"><button class="btn btn-primary" id="auto-play-btn">▶ &nbsp; Find &amp; Play</button><button class="btn btn-secondary" id="search-btn">Search</button></div>
-      <div class="quick-hint"><span>Try:</span><button type="button" data-query="Sintel">Sintel</button><button type="button" data-query="Popeye">Popeye</button><button type="button" data-query="Scooby-Doo">Scooby-Doo</button></div>
-    </div>
-  </header>
   <main class="shell">
-    <div class="status" id="status-banner" role="status" aria-live="polite"><span class="spinner hidden" id="status-spinner"></span><span class="status-text" id="status-text"></span></div>
-    <section class="section" id="search-results-section" hidden><div class="section-head"><div><div class="section-kicker">Search results</div><h2>Choose your stream</h2><p class="section-subtitle">Browse matching results and select a video to play.</p></div><span class="count" id="torrent-count"></span></div><div class="grid" id="torrent-grid"></div></section>
-    <section class="section"><div class="section-head"><div><div class="section-kicker">Hand-picked</div><h2>Curated library</h2><p class="section-subtitle">A small collection of titles ready to explore.</p></div><span class="count" id="catalog-count"></span></div><div class="grid" id="catalog-grid"><div class="empty"><strong>Loading your library…</strong>Fetching the catalog.</div></div></section>
-  </main>
-  <footer class="shell">The Mystery Vault ·</footer>
+    <nav class="topbar" aria-label="Main navigation">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">✦</div>
+        <div><div class="brand-name">MYSTERY VAULT</div><div class="brand-caption">Discover something worth watching</div></div>
+      </div>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch color theme">☼ <span>Light mode</span></button>
+    </nav>
 
-  <div class="modal" id="file-modal" role="dialog" aria-modal="true" aria-labelledby="modal-torrent-title"><div class="dialog"><div class="dialog-head"><h2 id="modal-torrent-title">Choose a video file</h2><p>Select the video file you want to play from this torrent.</p></div><div class="file-list" id="file-list-container"></div><div class="dialog-foot"><button class="btn btn-secondary" id="cancel-files-btn">Cancel</button></div></div></div>
-  <div class="modal" id="player-modal" role="dialog" aria-modal="true" aria-labelledby="now-playing"><div class="player-dialog"><div class="player-top"><div class="player-brand"><span class="player-dot"></span><div class="player-heading"><div class="player-label">Now playing</div><div class="now-playing" id="now-playing">Preparing stream…</div></div></div><button class="icon-btn" id="close-player-btn" aria-label="Close player" title="Close player">×</button></div><div class="video-frame"><video id="video-element" controls autoplay playsinline preload="metadata"></video><div class="buffer-overlay" id="buffer-overlay"><span class="spinner"></span><div class="buffer-label" id="buffer-label">Preparing your stream…</div></div></div><div class="player-bottom"><span class="player-tip"><span class="tip-icon">✦</span><span>Playback depends on the selected file and available peers.</span></span><span class="player-quality">MYSTERY VAULT</span></div></div></div>
+    <section class="hero">
+      <div class="eyebrow"><span aria-hidden="true">✧</span> Your next watch starts here</div>
+      <h1><span class="gradient-text">Find it. Stream it.</span></h1>
+      <p class="hero-copy">Search the catalog and available torrent sources in one place. Pick a result to inspect its files before playback begins.</p>
+      <form class="search-panel" id="search-form" role="search">
+        <input type="search" id="search" autocomplete="off" placeholder="Search a title or paste a magnet URI…" aria-label="Search movies or paste a magnet URI">
+        <button class="btn btn-primary" type="submit">⌕ &nbsp; Search titles</button>
+      </form>
+      <div id="status-banner" class="status" role="status" aria-live="polite"></div>
+    </section>
+
+    <section id="search-results-section" class="section hidden" aria-labelledby="results-title">
+      <div class="section-head">
+        <div><div class="section-kicker">Search results</div><h2 id="results-title">Matches for your search</h2><p class="section-note" id="results-note">YTS results are shown first.</p></div>
+        <div class="result-controls">
+          <label for="page-size" class="section-note">Show per batch</label>
+          <select id="page-size" class="select-control" aria-label="Number of search results to show at a time">
+            <option value="10">10 results</option><option value="20">20 results</option><option value="30">30 results</option><option value="50">50 results</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid" id="torrent-grid"></div>
+      <div class="load-more-wrap"><button class="btn btn-secondary hidden" id="load-more" type="button">Load more results ↓</button></div>
+    </section>
+
+    <section class="section" aria-labelledby="catalog-title">
+      <div class="section-head">
+        <div><div class="section-kicker">Hand-picked</div><h2 id="catalog-title">Curated library</h2><p class="section-note">Quick picks to test the streaming setup.</p></div>
+      </div>
+      <div class="grid" id="catalog-grid"></div>
+    </section>
+
+    <section class="section" aria-labelledby="external-title">
+      <div class="section-head">
+        <div><div class="section-kicker">Provider adapter</div><h2 id="external-title">Open in an external player</h2><p class="section-note">Search for a title to retrieve its TMDB ID automatically, or enter an ID manually. See the <a href="https://vidsrc.sh/vidsrc/docs/" target="_blank" rel="noopener noreferrer">provider URL documentation</a>. Use content you are authorized to access.</p></div>
+      </div>
+      <div class="embed-panel">
+        <form id="title-search-form" class="title-search-row">
+          <input id="title-search-query" type="search" maxlength="120" placeholder="Search for a movie or TV show…" autocomplete="off" aria-label="Movie or TV show title">
+          <button class="btn btn-secondary" type="submit">Search titles</button>
+        </form>
+        <div class="title-search-results" id="title-search-results" aria-live="polite"></div>
+        <p class="embed-status">Choose a result to fill its TMDB ID automatically, then open the player below.</p>
+        <form id="external-player-form" class="embed-form">
+          <label class="embed-field">Media type
+            <select id="external-media-type" class="select-control"><option value="movie">Movie</option><option value="tv">TV episode</option></select>
+          </label>
+          <label class="embed-field">IMDb / TMDB ID
+            <input id="external-media-id" type="text" required maxlength="80" pattern="[A-Za-z0-9._:-]{1,80}" placeholder="e.g. tt1234567 or 12345" autocomplete="off">
+          </label>
+          <label class="embed-field external-tv-field hidden">Season
+            <input id="external-season" type="number" min="0" max="99" value="1">
+          </label>
+          <label class="embed-field external-tv-field hidden">Episode
+            <input id="external-episode" type="number" min="1" max="999" value="1">
+          </label>
+          <button class="btn btn-primary" type="submit">Open external player</button>
+        </form>
+        <p class="embed-status" id="external-provider-status" role="status" aria-live="polite">Checking provider configuration…</p>
+      </div>
+    </section>
+    <p class="footer-note">Playback speed depends on available peers, their upload speeds, your connection, and whether the video format is browser-compatible. Results are search sources, not guarantees of availability. Movie metadata and posters provided by TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
+  </main>
+
+  <div class="modal" id="file-modal" role="dialog" aria-modal="true" aria-labelledby="modal-torrent-title">
+    <div class="modal-panel">
+      <div class="modal-head"><div><h2 id="modal-torrent-title">Choose a video file</h2><p>Select the video file you want to stream from this source.</p></div><button class="icon-btn" id="file-close" type="button" aria-label="Close file picker">×</button></div>
+      <div class="file-list" id="file-list-container"></div>
+      <div class="modal-foot"><button class="btn btn-secondary" id="file-cancel" type="button">Cancel</button></div>
+    </div>
+  </div>
+
+  <div class="modal" id="player-modal" role="dialog" aria-modal="true" aria-labelledby="now-playing">
+    <div class="modal-panel">
+      <div class="modal-head player-head"><div><h2 id="now-playing">Now playing</h2><p>Playback is streamed while the player is open.</p></div><button class="icon-btn" id="player-close" type="button" aria-label="Close video player">×</button></div>
+      <video id="video-element" controls playsinline preload="metadata"></video>
+      <iframe id="external-player-frame" class="hidden" title="External video player" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      <div class="player-foot"><span id="player-tip">Tip: use a smaller 720p release with healthy seed availability for faster starts.</span><button class="btn btn-secondary" id="player-close-bottom" type="button">Close player</button></div>
+    </div>
+  </div>
 
   <script>
-    const catalogGrid=document.getElementById('catalog-grid');
-    const torrentGrid=document.getElementById('torrent-grid');
-    const searchSection=document.getElementById('search-results-section');
-    const searchInput=document.getElementById('search');
-    const statusBanner=document.getElementById('status-banner');
-    const statusText=document.getElementById('status-text');
-    const statusSpinner=document.getElementById('status-spinner');
-    const fileModal=document.getElementById('file-modal');
-    const modalTorrentTitle=document.getElementById('modal-torrent-title');
-    const fileListContainer=document.getElementById('file-list-container');
-    const playerModal=document.getElementById('player-modal');
-    const nowPlaying=document.getElementById('now-playing');
-    const video=document.getElementById('video-element');
-    const bufferOverlay=document.getElementById('buffer-overlay');
-    const bufferLabel=document.getElementById('buffer-label');
-    let catalogItems=[];
-    let torrentResults=[];
-    let searchController=null;
-    let selectionController=null;
-    let statusTimer=null;
+    'use strict';
+    const catalogGrid = document.getElementById('catalog-grid');
+    const torrentGrid = document.getElementById('torrent-grid');
+    const searchSection = document.getElementById('search-results-section');
+    const searchInput = document.getElementById('search');
+    const statusBanner = document.getElementById('status-banner');
+    const fileModal = document.getElementById('file-modal');
+    const modalTorrentTitle = document.getElementById('modal-torrent-title');
+    const fileListContainer = document.getElementById('file-list-container');
+    const playerModal = document.getElementById('player-modal');
+    const nowPlaying = document.getElementById('now-playing');
+    const video = document.getElementById('video-element');
+    const externalFrame = document.getElementById('external-player-frame');
+    const playerTip = document.getElementById('player-tip');
+    let currentPlaybackMode = 'torrent';
+    const loadMoreButton = document.getElementById('load-more');
+    const pageSizeSelect = document.getElementById('page-size');
+    let searchResults = [];
+    let visibleCount = 0;
+    let currentSource = null;
+    let searchController = null;
+    let selectionController = null;
+    const POSTER_FALLBACK = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="600" viewBox="0 0 400 600"><rect width="400" height="600" fill="#18213a"/><text x="200" y="285" fill="#a78bfa" font-size="54" text-anchor="middle">✦</text><text x="200" y="340" fill="#aab4ce" font-family="sans-serif" font-size="20" text-anchor="middle">No poster available</text></svg>');
 
-    function setStatus(message,loading=false,timeout=0){clearTimeout(statusTimer);statusText.textContent=message||'';statusBanner.classList.toggle('visible',Boolean(message));statusSpinner.classList.toggle('hidden',!loading);if(timeout)statusTimer=setTimeout(()=>{if(!loading)statusBanner.classList.remove('visible')},timeout)}
-    function setBuffering(show,message='Preparing your stream…'){bufferOverlay.classList.toggle('visible',show);bufferLabel.textContent=message}
-    function formatSize(sizeMB){const n=Number(sizeMB)||0;return n>=1024?`${(n/1024).toFixed(1)} GB`:`${n} MB`}
-    function emptyState(title,detail=''){const box=document.createElement('div');box.className='empty';const strong=document.createElement('strong');strong.textContent=title;box.appendChild(strong);if(detail){const span=document.createElement('span');span.textContent=detail;box.appendChild(span)}return box}
-    function createCard(item,type,index){
-      const card=document.createElement('article');card.className='card';card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',`Play ${item.title||'selected item'}`);card.dataset.type=type;card.dataset.index=String(index);card.style.animationDelay=`${Math.min(index,10)*35}ms`;
-      const wrap=document.createElement('div');wrap.className='poster-wrap';const img=document.createElement('img');img.className='poster';img.loading='lazy';img.decoding='async';img.alt=item.title||'Poster';
-      img.onerror=()=>{img.onerror=null;img.src='data:image/svg+xml;charset=UTF-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="600"><rect width="100%" height="100%" fill="#191f2d"/><text x="50%" y="48%" fill="#929bb0" font-family="sans-serif" font-size="24" text-anchor="middle">NO POSTER</text><text x="50%" y="55%" fill="#596174" font-family="sans-serif" font-size="15" text-anchor="middle">MYSTERY VAULT</text></svg>')};
-      if(item.poster)img.src=item.poster;const badge=document.createElement('span');badge.className='poster-tag';badge.textContent=type==='catalog'?'CURATED':(index===0?'TOP MATCH':(item.provider||'TORRENT'));const play=document.createElement('span');play.className='play-chip';play.setAttribute('aria-hidden','true');play.textContent='▶';wrap.append(img,badge,play);
-      const info=document.createElement('div');info.className='card-info';const title=document.createElement('h3');title.className='card-title';title.textContent=item.title||'Untitled';const meta=document.createElement('div');meta.className='meta-row';const left=document.createElement('span');left.textContent=type==='catalog'?String(item.year||''):`Seeds: ${Number(item.seeders||0)}`;const right=document.createElement('span');right.className='tag';right.textContent=type==='catalog'?'Library':(item.provider||'Torrent');meta.append(left,right);info.append(title,meta);card.append(wrap,info);return card;
+    function setStatus(message, kind = '') {
+      statusBanner.textContent = message;
+      statusBanner.dataset.kind = kind;
     }
-    async function loadCatalog(){try{const res=await fetch('/api/library');if(!res.ok)throw new Error(`Catalog request failed (${res.status})`);catalogItems=await res.json();catalogGrid.replaceChildren();if(!catalogItems.length)catalogGrid.appendChild(emptyState('No curated titles yet','Try searching for a title above.'));else catalogItems.forEach((item,i)=>catalogGrid.appendChild(createCard(item,'catalog',i)));document.getElementById('catalog-count').textContent=`${catalogItems.length} titles`}catch(err){catalogGrid.replaceChildren(emptyState('Could not load the library','Check that the Express server is running, then refresh.'));document.getElementById('catalog-count').textContent=''}}
-    async function search(autoPlay){const query=searchInput.value.trim();if(!query){setStatus('Enter a movie title or paste a magnet URI to get started.');searchInput.focus();return}if(searchController)searchController.abort();searchController=new AbortController();const controller=searchController;setStatus(`Searching sources for “${query}”…`,true);try{const res=await fetch(`/api/torrent-search?q=${encodeURIComponent(query)}`,{signal:controller.signal});if(!res.ok)throw new Error(`Search failed (${res.status})`);const data=await res.json();if(controller!==searchController)return;torrentResults=Array.isArray(data.results)?data.results:[];renderResults(torrentResults);if(!torrentResults.length){setStatus(`No results found for “${query}”. Try a shorter title or another source.`);return}setStatus(`Found ${torrentResults.length} results. Select one to play.`,false,5000);if(autoPlay&&data.best){const best=torrentResults.find(x=>x.source===data.best.source)||data.best;selectTorrent(best.source,best.title)}else searchSection.scrollIntoView({behavior:'smooth',block:'start'})}catch(err){if(err.name==='AbortError')return;console.error(err);setStatus('Search failed. Check the server logs and try again.')}}
-    function renderResults(results){searchSection.hidden=false;torrentGrid.replaceChildren();document.getElementById('torrent-count').textContent=`${results.length} results`;if(!results.length){torrentGrid.appendChild(emptyState('No matching torrents','Try a different search phrase.'));return}results.forEach((item,i)=>torrentGrid.appendChild(createCard(item,'torrent',i)))}
-    async function selectTorrent(source,title){if(!source){setStatus('This result does not include a playable source.');return}if(selectionController)selectionController.abort();selectionController=new AbortController();const controller=selectionController;setStatus(`Inspecting files for “${title||'selected video'}”…`,true);try{const res=await fetch(`/api/torrent-files?source=${encodeURIComponent(source)}`,{signal:controller.signal});if(!res.ok)throw new Error(`Could not inspect torrent (${res.status})`);const data=await res.json();if(controller!==selectionController)return;if(!Array.isArray(data.files)||!data.files.length){setStatus('No supported video files were found in this torrent.');return}setStatus('');if(data.files.length===1)playFile(source,data.files[0].index,data.files[0].name);else{modalTorrentTitle.textContent=data.torrentName||title||'Choose a video file';fileListContainer.replaceChildren();data.files.forEach(file=>{const button=document.createElement('button');button.className='file-item';button.type='button';const name=document.createElement('span');name.className='file-name';name.textContent=file.path||file.name;const size=document.createElement('span');size.className='file-size';size.textContent=formatSize(file.sizeMB);button.append(name,size);button.addEventListener('click',()=>playFile(source,file.index,file.name));fileListContainer.appendChild(button)});fileModal.classList.add('open')}}catch(err){if(err.name==='AbortError')return;console.error(err);setStatus('Could not load torrent metadata. Try another result or check the server logs.')}}
-    function playFile(source,fileIndex,fileName){fileModal.classList.remove('open');nowPlaying.textContent=fileName||'Selected video';playerModal.classList.add('open');setBuffering(true,'Preparing your stream…');video.pause();video.removeAttribute('src');video.load();video.src=`/api/stream-file?source=${encodeURIComponent(source)}&fileIndex=${encodeURIComponent(fileIndex)}`;video.load();const p=video.play();if(p&&p.catch)p.catch(()=>setBuffering(true,'Your stream is being prepared. Press Play if it does not start automatically.'))}
-    async function closePlayer(){video.pause();video.removeAttribute('src');video.load();playerModal.classList.remove('open');setBuffering(false);try{await fetch('/api/stop-stream',{method:'POST',keepalive:true})}catch(err){console.warn('Could not notify server to stop stream:',err)}}
-    document.getElementById('auto-play-btn').addEventListener('click',()=>search(true));document.getElementById('search-btn').addEventListener('click',()=>search(false));document.getElementById('cancel-files-btn').addEventListener('click',()=>fileModal.classList.remove('open'));document.getElementById('close-player-btn').addEventListener('click',closePlayer);
-    document.querySelectorAll('[data-query]').forEach(button=>button.addEventListener('click',()=>{searchInput.value=button.dataset.query;search(true)}));searchInput.addEventListener('keydown',e=>{if(e.key==='Enter')search(true)});
-    function activateCard(card){const index=Number(card.dataset.index);if(card.dataset.type==='catalog'){const item=catalogItems[index];if(item)selectTorrent(item.magnet,item.title)}else{const item=torrentResults[index];if(item)selectTorrent(item.source,item.title)}}
-    document.addEventListener('click',e=>{const card=e.target.closest('.card');if(card)activateCard(card)});document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.activeElement.classList.contains('card'))activateCard(document.activeElement);if(e.key==='Escape'){if(playerModal.classList.contains('open'))closePlayer();else fileModal.classList.remove('open')}});
-    video.addEventListener('loadstart',()=>setBuffering(true,'Opening stream…'));video.addEventListener('waiting',()=>setBuffering(true,'Buffering video…'));video.addEventListener('stalled',()=>setBuffering(true,'Waiting for video data…'));video.addEventListener('canplay',()=>setBuffering(false));video.addEventListener('playing',()=>setBuffering(false));video.addEventListener('error',()=>{if(!playerModal.classList.contains('open'))return;setBuffering(true,video.error?.code===4?'This video format may not be supported by your browser.':'The stream could not be played. Try another file or result.')});
-    [fileModal,playerModal].forEach(modal=>modal.addEventListener('click',e=>{if(e.target===modal){if(modal===playerModal)closePlayer();else modal.classList.remove('open')}}));
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+    }
+    function posterUrl(value) {
+      return typeof value === 'string' && /^https?:\/\//i.test(value) ? value : POSTER_FALLBACK;
+    }
+    function showModal(modal) { modal.classList.add('open'); document.body.style.overflow = 'hidden'; }
+    function hideModal(modal) {
+      modal.classList.remove('open');
+      if (!document.querySelector('.modal.open')) document.body.style.overflow = '';
+    }
+    function formatSize(size) {
+      const n = Number(size);
+      return Number.isFinite(n) && n > 0 ? `${n.toLocaleString()} MB` : 'Size unknown';
+    }
+    function cardMarkup(item, index, type) {
+      const title = escapeHtml(item.title);
+      const poster = escapeHtml(posterUrl(item.poster));
+      const provider = type === 'catalog' ? 'Curated' : (item.provider || 'Torrent');
+      const metaLeft = type === 'catalog'
+        ? escapeHtml(item.year || '')
+        : `Seeds: ${Number(item.seeders || 0).toLocaleString()}`;
+      const metaRight = type === 'catalog'
+        ? 'Quick pick'
+        : (item.quality ? escapeHtml(item.quality) : `${Number(item.score || 0)} score`);
+      return `<article class="card" tabindex="0" role="button" data-card-type="${type}" data-index="${index}" aria-label="Select ${title}">
+        <div class="poster-wrap"><img src="${poster}" alt="" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${POSTER_FALLBACK}'"><div class="poster-overlay"></div>
+          <span class="provider-pill">${escapeHtml(provider)}</span><span class="play-hint" aria-hidden="true">▶</span></div>
+        <div class="card-info"><div class="card-title">${title}</div><div class="meta-row"><span>${metaLeft}</span><span class="meta-tag">${metaRight}</span></div></div>
+      </article>`;
+    }
+
+    async function loadCatalog() {
+      try {
+        const response = await fetch('/api/library');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const items = await response.json();
+        catalogGrid.innerHTML = items.length
+          ? items.map((item, index) => cardMarkup(item, index, 'catalog')).join('')
+          : '<div class="empty">No curated titles are available right now.</div>';
+        catalogGrid._items = items;
+      } catch (error) {
+        catalogGrid.innerHTML = '<div class="empty">Could not load the curated library. Check that the server is running.</div>';
+      }
+    }
+
+    async function searchTorrents() {
+      const query = searchInput.value.trim();
+      if (!query) {
+        searchSection.classList.add('hidden');
+        setStatus('Enter a title or paste a magnet URI to search.');
+        searchInput.focus();
+        return;
+      }
+      if (searchController) searchController.abort();
+      searchController = new AbortController();
+      setStatus(`Searching YTS first, then other available sources, for “${query}”…`);
+      searchSection.classList.remove('hidden');
+      torrentGrid.innerHTML = '<div class="empty">Searching sources…</div>';
+      loadMoreButton.classList.add('hidden');
+      try {
+        const response = await fetch(`/api/torrent-search?q=${encodeURIComponent(query)}&limit=50`, { signal: searchController.signal });
+        if (!response.ok) throw new Error(`Search failed (HTTP ${response.status})`);
+        const data = await response.json();
+        searchResults = Array.isArray(data.results) ? data.results : [];
+        visibleCount = 0;
+        renderMoreResults(true);
+        if (!searchResults.length) {
+          setStatus(`No matching torrents found for “${query}”. Try a shorter title.`, 'error');
+        } else {
+          const ytsCount = searchResults.filter(item => item.provider === 'YTS').length;
+          setStatus(`Found ${searchResults.length} results${ytsCount ? `, including ${ytsCount} YTS releases shown first` : ''}. Select a card to inspect its video files.`, 'success');
+        }
+      } catch (error) {
+        if (error.name === 'AbortError') return;
+        searchResults = [];
+        torrentGrid.innerHTML = '<div class="empty">Search failed. Check your server connection and try again.</div>';
+        setStatus(error.message || 'Could not search sources.', 'error');
+      }
+    }
+
+    function renderMoreResults(reset = false) {
+      const batchSize = Number.parseInt(pageSizeSelect.value, 10) || 10;
+      if (reset) {
+        torrentGrid.innerHTML = '';
+        visibleCount = 0;
+      }
+      const nextCount = Math.min(searchResults.length, visibleCount + batchSize);
+      const slice = searchResults.slice(visibleCount, nextCount);
+      const offset = visibleCount;
+      torrentGrid.insertAdjacentHTML('beforeend', slice.map((item, i) => cardMarkup(item, offset + i, 'search')).join(''));
+      visibleCount = nextCount;
+      loadMoreButton.classList.toggle('hidden', visibleCount >= searchResults.length);
+      loadMoreButton.textContent = `Load more results (${searchResults.length - visibleCount} left) ↓`;
+      document.getElementById('results-note').textContent =
+        `Showing ${visibleCount} of ${searchResults.length}. YTS results are prioritized first.`;
+    }
+
+    async function handleTorrentSelection(source, title) {
+      currentSource = source;
+      if (selectionController) selectionController.abort();
+      selectionController = new AbortController();
+      setStatus(`Inspecting available video files for “${title}”…`);
+      try {
+        const response = await fetch(`/api/torrent-files?source=${encodeURIComponent(source)}`, { signal: selectionController.signal });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Could not inspect this source.');
+        if (!Array.isArray(data.files) || !data.files.length) {
+          setStatus('No supported video files (.mp4, .mkv, .webm) were found in this source.', 'error');
+          return;
+        }
+        setStatus('');
+        if (data.files.length === 1) {
+          playFile(source, data.files[0].index, data.files[0].name);
+        } else {
+          modalTorrentTitle.textContent = data.torrentName || title;
+          fileListContainer.innerHTML = data.files.map(file =>
+            `<button type="button" class="file-item" data-file-index="${Number(file.index)}">
+              <span class="file-name">▣ &nbsp;${escapeHtml(file.path || file.name)}</span><span class="file-size">${escapeHtml(formatSize(file.sizeMB))}</span>
+            </button>`
+          ).join('');
+          fileListContainer._source = source;
+          fileListContainer._files = data.files;
+          showModal(fileModal);
+        }
+      } catch (error) {
+        if (error.name === 'AbortError') return;
+        console.error('Error inspecting torrent files:', error);
+        setStatus(error.message || 'Failed to inspect torrent metadata.', 'error');
+      }
+    }
+
+    function playFile(source, fileIndex, fileName) {
+      hideModal(fileModal);
+      currentPlaybackMode = 'torrent';
+      externalFrame.removeAttribute('src');
+      externalFrame.classList.add('hidden');
+      video.classList.remove('hidden');
+      playerTip.textContent = 'Tip: use a smaller 720p release with healthy seed availability for faster starts.';
+      nowPlaying.textContent = fileName ? `Streaming · ${fileName}` : 'Now playing';
+      video.pause();
+      video.removeAttribute('src');
+      video.load();
+      video.src = `/api/stream-file?source=${encodeURIComponent(source)}&fileIndex=${encodeURIComponent(fileIndex)}`;
+      showModal(playerModal);
+      const playPromise = video.play();
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch(() => setStatus('Press play in the video controls to begin playback.'));
+      }
+    }
+
+    async function closePlayer() {
+      const closingMode = currentPlaybackMode;
+      video.pause();
+      video.removeAttribute('src');
+      video.load();
+      externalFrame.removeAttribute('src');
+      externalFrame.classList.add('hidden');
+      video.classList.remove('hidden');
+      hideModal(playerModal);
+      if (closingMode === 'external') {
+        setStatus('External player closed.', 'success');
+        return;
+      }
+      // Server-side endpoint destroys all active torrent sessions, not just the HTTP stream.
+      try {
+        await fetch('/api/stop-stream', { method: 'POST', keepalive: true });
+        setStatus('Player closed. All torrent sessions have been stopped.', 'success');
+      } catch (error) {
+        setStatus('Player closed, but the server could not confirm torrent cleanup. Check the server log.', 'error');
+      }
+    }
+
+    const externalTypeSelect = document.getElementById('external-media-type');
+    const externalStatus = document.getElementById('external-provider-status');
+    const externalTvFields = [...document.querySelectorAll('.external-tv-field')];
+    function updateExternalTypeFields() {
+      const isTv = externalTypeSelect.value === 'tv';
+      externalTvFields.forEach(field => field.classList.toggle('hidden', !isTv));
+      document.getElementById('external-season').required = isTv;
+      document.getElementById('external-episode').required = isTv;
+    }
+    externalTypeSelect.addEventListener('change', updateExternalTypeFields);
+    updateExternalTypeFields();
+    fetch('/api/embed-config').then(response => response.json()).then(config => {
+      externalStatus.textContent = config.enabled
+        ? `Configured provider: ${config.providerName}. Use only content you have permission to access.`
+        : 'No external provider configured. Check the EMBED_PROVIDER_* environment variables.';
+    }).catch(() => {
+      externalStatus.textContent = 'Could not check provider configuration. Confirm the server is running.';
+    });
+
+    const titleSearchForm = document.getElementById('title-search-form');
+    const titleSearchInput = document.getElementById('title-search-query');
+    const titleSearchResults = document.getElementById('title-search-results');
+    titleSearchForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      const query = titleSearchInput.value.trim();
+      if (query.length < 2) {
+        titleSearchResults.textContent = 'Enter at least two characters to search.';
+        return;
+      }
+      titleSearchResults.textContent = 'Searching TMDB…';
+      try {
+        const type = externalTypeSelect.value;
+        const response = await fetch(`/api/title-search?type=${encodeURIComponent(type)}&q=${encodeURIComponent(query)}`);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Title search failed.');
+        titleSearchResults.replaceChildren();
+        if (!data.results?.length) {
+          titleSearchResults.textContent = 'No matching titles found. Try another spelling or choose the other media type.';
+          return;
+        }
+        data.results.forEach(item => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'title-search-result';
+          const poster = document.createElement(item.posterUrl ? 'img' : 'div');
+          if (item.posterUrl) {
+            poster.src = item.posterUrl;
+            poster.alt = '';
+            poster.loading = 'lazy';
+          } else {
+            poster.className = 'title-search-poster-placeholder';
+            poster.setAttribute('aria-hidden', 'true');
+          }
+          const copy = document.createElement('div');
+          copy.className = 'title-search-result-copy';
+          const title = document.createElement('div');
+          title.className = 'title-search-result-title';
+          title.textContent = item.title;
+          const meta = document.createElement('div');
+          meta.className = 'title-search-result-meta';
+          meta.textContent = `${item.year || 'Year unknown'} · ${item.mediaType === 'movie' ? 'Movie' : 'TV show'} · TMDB ${item.tmdbId}`;
+          const overview = document.createElement('div');
+          overview.className = 'title-search-result-overview';
+          overview.textContent = item.overview;
+          copy.append(title, meta, overview);
+          const choose = document.createElement('span');
+          choose.className = 'btn btn-secondary';
+          choose.textContent = 'Use title';
+          button.append(poster, copy, choose);
+          button.addEventListener('click', () => {
+            document.getElementById('external-media-id').value = item.tmdbId;
+            externalTypeSelect.value = item.mediaType;
+            updateExternalTypeFields();
+            externalStatus.textContent = `Selected ${item.title} (${item.year || 'year unknown'}), TMDB ID ${item.tmdbId}.`;
+            titleSearchResults.querySelectorAll('button').forEach(resultButton => resultButton.setAttribute('aria-pressed', String(resultButton === button)));
+          });
+          titleSearchResults.append(button);
+        });
+      } catch (error) {
+        titleSearchResults.textContent = error.message || 'Could not search titles.';
+      }
+    });
+
+    document.getElementById('external-player-form').addEventListener('submit', async event => {
+      event.preventDefault();
+      const payload = {
+        mediaType: externalTypeSelect.value,
+        id: document.getElementById('external-media-id').value.trim(),
+        season: document.getElementById('external-season').value,
+        episode: document.getElementById('external-episode').value
+      };
+      externalStatus.textContent = 'Preparing external player…';
+      try {
+        const response = await fetch('/api/external-player', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Could not prepare external playback.');
+        currentPlaybackMode = 'external';
+        video.pause();
+        video.removeAttribute('src');
+        video.load();
+        video.classList.add('hidden');
+        externalFrame.classList.remove('hidden');
+        externalFrame.title = `${result.providerName} external player`;
+        externalFrame.src = result.url;
+        nowPlaying.textContent = `External player · ${payload.id}`;
+        playerTip.textContent = `Embedded provider: ${result.providerName}. The provider controls playback and availability.`;
+        showModal(playerModal);
+        externalStatus.textContent = `Opened ${result.providerName}.`;
+      } catch (error) {
+        externalStatus.textContent = error.message || 'Could not open external player.';
+      }
+    });
+
+    document.getElementById('search-form').addEventListener('submit', event => {
+      event.preventDefault();
+      searchTorrents();
+    });
+    loadMoreButton.addEventListener('click', () => renderMoreResults(false));
+    pageSizeSelect.addEventListener('change', () => renderMoreResults(true));
+    document.getElementById('file-close').addEventListener('click', () => hideModal(fileModal));
+    document.getElementById('file-cancel').addEventListener('click', () => hideModal(fileModal));
+    document.getElementById('player-close').addEventListener('click', closePlayer);
+    document.getElementById('player-close-bottom').addEventListener('click', closePlayer);
+    fileListContainer.addEventListener('click', event => {
+      const button = event.target.closest('[data-file-index]');
+      if (!button) return;
+      const index = Number(button.dataset.fileIndex);
+      const file = (fileListContainer._files || []).find(item => Number(item.index) === index);
+      if (file) playFile(fileListContainer._source, index, file.name);
+    });
+    function handleCardActivation(event) {
+      const card = event.target.closest('[data-card-type]');
+      if (!card) return;
+      const index = Number(card.dataset.index);
+      const items = card.dataset.cardType === 'catalog' ? catalogGrid._items : searchResults;
+      const item = items && items[index];
+      if (item) handleTorrentSelection(card.dataset.cardType === 'catalog' ? item.magnet : item.source, item.title);
+    }
+    document.addEventListener('click', handleCardActivation);
+    document.addEventListener('keydown', event => {
+      if ((event.key === 'Enter' || event.key === ' ') && event.target.matches('.card')) {
+        event.preventDefault();
+        event.target.click();
+      }
+      if (event.key === 'Escape') {
+        if (playerModal.classList.contains('open')) closePlayer();
+        else if (fileModal.classList.contains('open')) hideModal(fileModal);
+      }
+    });
+    [fileModal, playerModal].forEach(modal => modal.addEventListener('click', event => {
+      if (event.target === modal) {
+        if (modal === playerModal) closePlayer();
+        else hideModal(modal);
+      }
+    }));
+
+    const themeToggle = document.getElementById('theme-toggle');
+    themeToggle.addEventListener('click', () => {
+      const root = document.documentElement;
+      const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+      root.dataset.theme = next;
+      themeToggle.innerHTML = next === 'dark' ? '☼ <span>Light mode</span>' : '☾ <span>Dark mode</span>';
+      document.querySelector('meta[name="theme-color"]').content = next === 'dark' ? '#0b1020' : '#f4f6fc';
+    });
+
     loadCatalog();
   </script>
 </body>
