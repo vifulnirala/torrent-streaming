@@ -11,16 +11,20 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Set up Node.js for the build only
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: 26
+          node-version: 22
           cache: npm
       - name: Install dependencies and apply compatibility fix
         run: npm install
       - name: Check JavaScript syntax
-        run: npm run check
+        shell: pwsh
+        run: |
+          node --check .\server.js
+          node --check .\public\js\app.js
+          node --check .\electron-main.mjs
       - name: Build installer and portable EXE
         run: npm run dist
       - name: Upload Windows app files
